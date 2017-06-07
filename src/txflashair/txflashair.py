@@ -39,12 +39,24 @@ class File(object):
 
 
 
+def has_attribute(which):
+    def validator(self, attr, file):
+        value = file.attributes
+        if value & which:
+            return
+        raise ValueError(
+            "{} missing required attribute {}".format(value, which)
+        )
+    return validator
+
+
+
 @attr.s(frozen=True)
 class DeleteFile(object):
     file = attr.ib(
         validator=and_(
             instance_of(File),
-            lambda self, attr, value: not (FileAttributes.DIRECTLY & value.attributes),
+            has_attribute(FileAttributes.DIRECTLY),
         ),
     )
 
