@@ -74,9 +74,9 @@ def main(reactor):
     include = IncludeGlob(o["include"].decode("ascii"))
 
     if o["remove"]:
-        remove = remove_remote
+        maybe_remove = remove_remote
     else:
-        remove = passthrough
+        maybe_remove = passthrough
 
     def maybe_sync(f):
         destination = remote_to_local_name(local_root, device_root, f.name)
@@ -84,11 +84,12 @@ def main(reactor):
             print(f.name.basename(), "does not match include filter.")
         elif destination.exists() and destination.getsize() == f.size:
             print(destination.path, "already exists.")
+            return maybe_remove(None, treq, f)
         else:
             print(destination.path, "sync'ing.")
             d = download_file(treq, flashair, f.name)
             d.addCallback(save_to, destination)
-            d.addCallback(remove, treq, f)
+            d.addCallback(maybe_remove, treq, f)
             return d
 
     return visit(
