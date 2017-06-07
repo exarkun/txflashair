@@ -1,3 +1,5 @@
+from __future__ import unicode_literals, print_function
+
 from sys import argv
 
 from twisted.python.url import URL
