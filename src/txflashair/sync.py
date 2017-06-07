@@ -44,12 +44,12 @@ def remote_to_local_name(local_root, device_root, file_name):
 
 
 
-def remove_remote(ignored, treq, f):
-    return remove_file(treq, f)
+def remove_remote(ignored, treq, root, f):
+    return remove_file(treq, root, f)
 
 
 
-def passthrough(value, treq, f):
+def passthrough(value, treq, root, f):
     return value
 
 
@@ -84,12 +84,12 @@ def main(reactor):
             print(f.name.basename(), "does not match include filter.")
         elif destination.exists() and destination.getsize() == f.size:
             print(destination.path, "already exists.")
-            return maybe_remove(None, treq, f)
+            return maybe_remove(None, treq, flashair, f)
         else:
             print(destination.path, "sync'ing.")
             d = download_file(treq, flashair, f.name)
             d.addCallback(save_to, destination)
-            d.addCallback(maybe_remove, treq, f)
+            d.addCallback(maybe_remove, treq, flashair, f)
             return d
 
     return visit(
