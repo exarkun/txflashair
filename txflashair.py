@@ -3,7 +3,7 @@
 from __future__ import unicode_literals, print_function
 
 import attr
-from attr.validators import instance_of
+from attr.validators import and_, instance_of
 
 from constantly import FlagConstant, Flags
 
@@ -22,6 +22,56 @@ class FileAttributes(Flags):
     VOLUME = FlagConstant()
     DIRECTLY = FlagConstant()
     ARCHIVE = FlagConstant()
+
+
+
+@attr.s(frozen=True)
+class File(object):
+    name = attr.ib(validator=instance_of(FilePath))
+    size = attr.ib(validator=instance_of(int))
+    attributes = attr.ib(
+        validator=lambda self, attr, value: (
+            value in FileAttributes.iterconstants()
+        ),
+    )
+    date = attr.ib(validator=instance_of(int))
+    time = attr.ib(validator=instance_of(int))
+
+
+
+@attr.s(frozen=True)
+class DeleteFile(object):
+    file = attr.ib(
+        validator=and_(
+            instance_of(File),
+            lambda self, attr, value: not (FileAttributes.DIRECTLY & value.attributes),
+        ),
+    )
+
+
+    def uri(self):
+        return URL(
+            path=["upload.cgi"],
+            query=[
+                ("DEL", self.file.name.path),
+            ],
+        )
+
+
+    def headers(self):
+        return None
+
+
+    def body(self):
+        return None
+
+
+    def process_response(self, response):
+        if response.code != OK:
+            raise Exception(
+                "Unexpected response code {}:\n{}".format(response.code)
+            )
+        return None
 
 
 
@@ -93,20 +143,6 @@ def lookupByValue(constants, flags):
 
 
 
-@attr.s(frozen=True)
-class File(object):
-    name = attr.ib(validator=instance_of(FilePath))
-    size = attr.ib(validator=instance_of(int))
-    attributes = attr.ib(
-        validator=lambda self, attr, value: (
-            value in FileAttributes.iterconstants()
-        ),
-    )
-    date = attr.ib(validator=instance_of(int))
-    time = attr.ib(validator=instance_of(int))
-
-
-
 def get_file_list(treq, root, path):
     return execute(treq, root, GetFileList(directory=path))
 
@@ -116,6 +152,11 @@ def download_file(treq, root, path):
     uri = root.replace(path=path.segmentsFrom(FilePath(b"/")))
     url = uri.asURI().asText().encode("ascii")
     return treq.get(url)
+
+
+
+def remove_file(treq, root, file):
+    return execute(treq, root, DeleteFile(file=file))
 
 
 

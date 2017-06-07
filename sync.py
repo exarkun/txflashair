@@ -8,7 +8,7 @@ from twisted.python.filepath import FilePath
 import treq
 from treq import collect
 
-from .txflashair import visit, download_file
+from .txflashair import visit, download_file, remove_file
 
 
 class Options(Options):
@@ -16,6 +16,10 @@ class Options(Options):
         ("device-url", None, "http://192.168.0.1/", "The location of the FlashAir device."),
         ("device-root", None, "/", "The root of the directory tree on the device from which to sync."),
         ("local-root", None, None, "The local directory to which to sync."),
+    ]
+
+    optFlags = [
+        ("remove", None, "Remove files from the device once there is a local copy."),
     ]
 
 
@@ -33,6 +37,16 @@ def remote_to_local_name(local_root, device_root, file_name):
 
 
 
+def remove_remote(ignored, treq, f):
+    return remove_file(treq, f)
+
+
+
+def passthrough(value, treq, f):
+    return value
+
+
+
 @react
 def main(reactor):
     o = Options()
@@ -41,6 +55,10 @@ def main(reactor):
     flashair = URL.fromText(o["device-url"].decode("ascii"))
     device_root = FilePath(o["device-root"])
     local_root = FilePath(o["local-root"])
+    if o["remove"]:
+        remove = remove_remote
+    else:
+        remove = passthrough
 
     def maybe_sync(f):
         destination = remote_to_local_name(local_root, device_root, f.name)
@@ -50,6 +68,7 @@ def main(reactor):
             print(destination.path, "sync'ing.")
             d = download_file(treq, flashair, f.name)
             d.addCallback(save_to, destination)
+            d.addCallback(remove, treq, f)
             return d
 
     return visit(
