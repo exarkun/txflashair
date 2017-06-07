@@ -53,8 +53,8 @@ def main(reactor):
     o.parseOptions(argv[1:])
 
     flashair = URL.fromText(o["device-url"].decode("ascii"))
-    device_root = FilePath(o["device-root"])
-    local_root = FilePath(o["local-root"])
+    device_root = FilePath(o["device-root"].decode("ascii"))
+    local_root = FilePath(o["local-root"].decode("ascii"))
     if o["remove"]:
         remove = remove_remote
     else:
