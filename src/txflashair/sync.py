@@ -1,6 +1,10 @@
 from __future__ import unicode_literals, print_function
 
 from sys import argv
+from fnmatch import fnmatchcase
+
+import attr
+from attr.validators import instance_of
 
 from twisted.python.url import URL
 from twisted.python.usage import Options
@@ -18,6 +22,7 @@ class Options(Options):
         ("device-url", None, "http://192.168.0.1/", "The location of the FlashAir device."),
         ("device-root", None, "/", "The root of the directory tree on the device from which to sync."),
         ("local-root", None, None, "The local directory to which to sync."),
+        ("include", None, "*", "Sync only files whose base name matches given glob."),
     ]
 
     optFlags = [
@@ -49,6 +54,15 @@ def passthrough(value, treq, f):
 
 
 
+@attr.s(frozen=True)
+class IncludeGlob(object):
+    glob = attr.ib(validator=instance_of(unicode))
+
+    def matches(self, name):
+        return fnmatchcase(name, self.glob)
+
+
+
 @react
 def main(reactor):
     o = Options()
@@ -57,6 +71,8 @@ def main(reactor):
     flashair = URL.fromText(o["device-url"].decode("ascii"))
     device_root = FilePath(o["device-root"].decode("ascii"))
     local_root = FilePath(o["local-root"].decode("ascii"))
+    include = IncludeGlob(o["include"].decode("ascii"))
+
     if o["remove"]:
         remove = remove_remote
     else:
@@ -64,7 +80,9 @@ def main(reactor):
 
     def maybe_sync(f):
         destination = remote_to_local_name(local_root, device_root, f.name)
-        if destination.exists() and destination.getsize() == f.size:
+        if not include.matches(f.name.basename()):
+            print(f.name.basename(), "does not match include filter.")
+        elif destination.exists() and destination.getsize() == f.size:
             print(destination.path, "already exists.")
         else:
             print(destination.path, "sync'ing.")
