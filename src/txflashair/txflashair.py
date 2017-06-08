@@ -56,7 +56,7 @@ class DeleteFile(object):
     file = attr.ib(
         validator=and_(
             instance_of(File),
-            has_attribute(FileAttributes.DIRECTLY),
+            has_attribute(FileAttributes.ARCHIVE),
         ),
     )
 
