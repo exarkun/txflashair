@@ -79,11 +79,15 @@ class DeleteFile(object):
 
 
     def process_response(self, response):
-        if response.code != OK:
-            raise Exception(
-                "Unexpected response code {}:\n{}".format(response.code)
+        d = readBody(response)
+        def read(body):
+            if response.code != OK:
+                raise Exception(
+                    "Unexpected response code {}:\n{}".format(response.code, body)
             )
-        return None
+            return None
+        d.addCallback(read)
+        return d
 
 
 
