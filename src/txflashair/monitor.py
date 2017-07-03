@@ -27,7 +27,7 @@ class Options(Options):
 
 def on_network(network):
     for iface in interfaces():
-        for af, addrs in ifaddresses(iface):
+        for af, addrs in ifaddresses(iface).items():
             for addr in addrs:
                 if ip_address(addr["addr"]) in network:
                     return True
