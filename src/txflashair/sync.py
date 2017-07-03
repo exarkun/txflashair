@@ -108,9 +108,12 @@ def sync(flashair, device_root, local_root, include, maybe_remove):
 
 
 
-@react
-def main(reactor):
+def _sync(reactor):
     o = Options()
     o.parseOptions(argv[1:])
 
     return sync(**sync_options(o))
+
+
+def main():
+    return react(_sync, [])

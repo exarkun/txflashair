@@ -49,8 +49,7 @@ def monitor(reactor, network, options):
 
 
 
-@react
-def main(reactor):
+def _monitor(reactor):
     o = Options()
     o.parseOptions(argv[1:])
     network = ip_network(o["network"])
@@ -60,3 +59,7 @@ def main(reactor):
         network,
         sync_options(o),
     )
+
+
+def main():
+    return react(_monitor, [])
