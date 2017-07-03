@@ -63,11 +63,7 @@ class IncludeGlob(object):
 
 
 
-@react
-def main(reactor):
-    o = Options()
-    o.parseOptions(argv[1:])
-
+def sync_options(o):
     flashair = URL.fromText(o["device-url"].decode("ascii"))
     device_root = FilePath(o["device-root"].decode("ascii"))
     local_root = FilePath(o["local-root"].decode("ascii"))
@@ -78,6 +74,17 @@ def main(reactor):
     else:
         maybe_remove = passthrough
 
+    return dict(
+        flashair=flashair,
+        device_root=device_root,
+        local_root=local_root,
+        include=include,
+        maybe_remove=maybe_remove,
+    )
+
+
+
+def sync(flashair, device_root, local_root, include, maybe_remove):
     def maybe_sync(f):
         destination = remote_to_local_name(local_root, device_root, f.name)
         if not include.matches(f.name.basename()):
@@ -98,3 +105,12 @@ def main(reactor):
         device_root,
         maybe_sync,
     )
+
+
+
+@react
+def main(reactor):
+    o = Options()
+    o.parseOptions(argv[1:])
+
+    return sync(**sync_options(o))

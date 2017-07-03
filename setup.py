@@ -11,6 +11,7 @@ setuptools.setup(
     entry_points={
         "console_scripts": [
             "txflashair-sync = txflashair.sync:main",
+            "txflashair-monitor = txflashair.monitor:main",
         ]
     },
 )
