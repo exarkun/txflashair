@@ -29,8 +29,14 @@ def on_network(network):
     for iface in interfaces():
         for af, addrs in ifaddresses(iface).items():
             for addr in addrs:
-                if ip_address(addr["addr"]) in network:
-                    return True
+                try:
+                    addr = ip_address(addr["addr"])
+                except ValueError:
+                    # Things like MAC addresses...
+                    pass
+                else:
+                    if addr in network:
+                        return True
     return False
 
 
