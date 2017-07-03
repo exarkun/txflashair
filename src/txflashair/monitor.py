@@ -41,15 +41,26 @@ def on_network(network):
 
 
 
+def _delay(ignored, reactor):
+    print("Sleeping for 300 seconds.")
+    return deferLater(reactor, 300, lambda: None)
+
+
+
 def monitor(reactor, network, options):
     def check():
+        print("Checking...")
         if on_network(network):
+            print("On network {}: sync'ing.".format(network))
             # Do it.
             d = sync(**options)
             # Then give it a rest for a while.
-            d.addCallback(deferLater(reactor, 300, lambda: None))
+            d.addCallback(_delay, reactor)
             return d
+
+        print("Not on network {}.".format(network))
         return None
+
     # Check once in a while.
     return LoopingCall(check).start(10)
 
