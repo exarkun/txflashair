@@ -27,16 +27,23 @@ class Options(Options):
 
 def on_network(network):
     for iface in interfaces():
-        for af, addrs in ifaddresses(iface).items():
+        try:
+            ifaddrs = ifaddresses(iface)
+        except ValueError:
+            # The interface went away in the interim.
+            continue
+
+        for af, addrs in ifaddrs.items():
             for addr in addrs:
                 try:
                     addr = ip_address(addr["addr"])
                 except ValueError:
                     # Things like MAC addresses...
-                    pass
-                else:
-                    if addr in network:
-                        return True
+                    continue
+
+                if addr in network:
+                    return True
+
     return False
 
 
