@@ -60,7 +60,7 @@ def monitor(reactor, network, options):
         if on_network(network):
             print("On network {}: sync'ing.".format(network))
             # Do it.
-            d = sync(**options)
+            d = sync(reactor, **options)
             # Then give it a rest for a while.
             d.addCallback(_delay, reactor)
             return d
