@@ -7,6 +7,7 @@ from functools import partial
 import attr
 from attr.validators import instance_of
 
+from twisted.python.log import err
 from twisted.python.url import URL
 from twisted.python.usage import Options
 from twisted.internet.task import react
@@ -125,11 +126,26 @@ def sync(reactor, flashair, device_root, local_root, include, maybe_remove, down
 
 
 
+def retry(operation):
+    """
+    Repeatedly call the given `Deferred`-returning callable until the
+    `Deferred` succeeds.
+    """
+    d = operation()
+    d.addErrback(
+        lambda reason: (
+            err(reason),
+            retry(operation),
+        )[1],
+    )
+    return d
+
+
 def _sync(reactor):
     o = Options()
     o.parseOptions(argv[1:])
 
-    return sync(reactor, **sync_options(o))
+    return retry(partial(sync, reactor, **sync_options(o)))
 
 
 def main():
